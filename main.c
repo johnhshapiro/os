@@ -7,24 +7,22 @@
 #include <error.h>
 
 int main() {
-    int pid = fork();
+    int status = fork();
     int child_pid = getpid();
     int parent_pid = getppid();
-    int exitStatus;
+    waitpid(-1, &status, 0);
 
-    if (pid < 0) {
-        perror("fork"); 
-        exit(-1);
-    }
-    else if (pid > 0) {
-        //printf("this is the parent");
-        // WHY DOES THE ABOVE LINE STILL EXECUTE EVEN THOUGH IT'S NOT TRUE!?
-    }
-    else {
-        printf("Child PID: %d\nParent PID: %d\n", child_pid, parent_pid);
+    if (status == 0) {
+        assert(printf("Child PID: %d\nParent PID: %d\n", child_pid, parent_pid) != 0);
         execl("./counter", "counter", "5", (char *) NULL);
     }
-    waitpid(pid, &exitStatus, 0); 
+    else if (status < 0) {
+        perror("fork error");
+        exit(-1);
+    }
+    else {
+        //this is the parent not sure if I should do something here...
+    } 
 
     return 0;
 }
