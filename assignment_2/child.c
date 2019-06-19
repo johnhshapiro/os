@@ -1,6 +1,8 @@
 #include <sys/types.h>
 #include <signal.h>
+#include <stdio.h>
 
-int main(int ppid) {
-    kill(ppid, SIGINT);
+int main() {
+    printf("poopity scoop\n");
+    kill(1, SIGINT);
 }
