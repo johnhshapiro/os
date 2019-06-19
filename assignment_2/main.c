@@ -16,6 +16,8 @@ int main() {
     sigemptyset(&action.sa_mask);
     action.sa_flags = SA_RESTART;
     assert(sigaction(SIGUSR1, &action, NULL) == 0);
+    assert(sigaction(SIGUSR2, &action, NULL) == 0);
+    assert(sigaction(SIGURG, &action, NULL) == 0);
     
     int status = fork();
 
@@ -34,11 +36,13 @@ int main() {
 }
 
 void handler(int signal_type) {
-    assert(printf("I made it here") != 0);
     if (signal_type == 10) {
-        assert(printf("SIGUSR1 handled!") != 0);
+        assert(printf("SIGUSR1 handled!\n") != 0);
     }
     if (signal_type == 12) {
-        assert(printf("SIGUSR2 handled!") != 0);
+        assert(printf("SIGUSR2 handled!\n") != 0);
+    }
+    if (signal_type == 23) {
+        assert(printf("SIGURG handled!\n") != 0);
     }
 }
