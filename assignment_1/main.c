@@ -10,7 +10,6 @@ int main() {
     int status = fork();
     int child_pid = getpid();
     int parent_pid = getppid();
-    assert((waitpid(-1, &status, 0)) != 0);
 
     if (status == 0) {
         assert(printf("Child PID: %d\nParent PID: %d\n", child_pid, parent_pid) != 0);
@@ -21,6 +20,7 @@ int main() {
         exit(-1);
     }
     else {
+        assert((waitpid(-1, &status, 0)) != 0);
     } 
 
     return 0;
