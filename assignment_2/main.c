@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <errno.h>
 
 void handler();
 
@@ -13,8 +14,9 @@ int main() {
 
     struct sigaction action;
     action.sa_handler = handler;
-    sigemptyset(&action.sa_mask);
+    assert(sigemptyset(&action.sa_mask) >= 0);
     action.sa_flags = SA_RESTART;
+
     assert(sigaction(SIGUSR1, &action, NULL) == 0);
     assert(sigaction(SIGUSR2, &action, NULL) == 0);
     assert(sigaction(SIGURG, &action, NULL) == 0);
@@ -23,6 +25,7 @@ int main() {
 
     if (status == 0) {
         assert(execl("./child", "steve_da_best", NULL) != -1);
+        perror("execl error");
     }
     else if (status < 0) {
         perror("fork error");
