@@ -25,8 +25,9 @@ int main() {
     int status = fork();
 
     if (status == 0) {
-        assert(execl("./child", "steve_da_best", NULL) != -1);
+        execl("./child", "steve_da_best", NULL);
         printf("Execl failed with error number %d\n", errno);
+        exit(-1);
     }
     else if (status < 0) {
         perror("fork error");
