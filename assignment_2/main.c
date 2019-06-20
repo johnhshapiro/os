@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#define errno (*__errno_location())
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
@@ -25,7 +26,7 @@ int main() {
 
     if (status == 0) {
         assert(execl("./child", "steve_da_best", NULL) != -1);
-        perror("execl error");
+        printf("Execl failed with error number %d\n", errno);
     }
     else if (status < 0) {
         perror("fork error");
@@ -34,8 +35,7 @@ int main() {
     else {
         assert((waitpid(-1, &status, 0)) != 0);
     }
-    return(0);
-    
+    return(0);    
 }
 
 void handler(int signal_type) {
