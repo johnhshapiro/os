@@ -8,4 +8,5 @@ int main() {
         printf("awake in %d\n", pid);
         sleep(1);
     }
+    return(0);
 }
