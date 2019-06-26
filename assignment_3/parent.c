@@ -36,12 +36,10 @@ int main() {
     }
     else {
         for(int i = 0; i < 1; i++) {
-            char child_stop_string[] = "I'm stopping my child!\n";
-            char child_cont_string[] = "My child continues!\n";
-            write(1, child_stop_string, strlen(child_stop_string));
+            WRITESTRING("STOP, CHILD!\n");
             assert(kill(status, SIGSTOP) == 0);
             sleep(2);
-            write(1, child_cont_string, strlen(child_cont_string));
+            WRITESTRING("CONTINUE, CHILD!\n");
             assert(kill(status, SIGCONT) == 0);  
             sleep(2);
         }
