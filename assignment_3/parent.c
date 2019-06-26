@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include "syscall.h"
+#include "eye2eh.c"
 
 void handler();
 
@@ -33,7 +35,7 @@ int main() {
         exit(-1);
     }
     else {
-        for(int i = 0; i < 5; i++) {
+        for(int i = 0; i < 1; i++) {
             char child_stop_string[] = "I'm stopping my child!\n";
             char child_cont_string[] = "My child continues!\n";
             write(1, child_stop_string, strlen(child_stop_string));
@@ -43,12 +45,14 @@ int main() {
             assert(kill(status, SIGCONT) == 0);  
             sleep(2);
         }
+        assert(kill(status, SIGINT) == 0);
+        pause();
     }
     return(0);    
 }
 
 void handler(int signal_type) {
     if (signal_type == 17) {
-        assert(printf("SIGCHILD birthed!\n") != 0);
+        WRITESTRING("SIGCHLD birthed!\n");
     }
 }
