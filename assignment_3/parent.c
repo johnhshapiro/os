@@ -13,6 +13,7 @@
 #include "eye2eh.c"
 
 void handler();
+int status;
 
 int main() {
 
@@ -44,10 +45,6 @@ int main() {
             sleep(2);
         }
         assert(kill(status, SIGINT) == 0);
-        if (WIFSIGNALED(status)){
-            int exit_status = WTERMSIG(status);
-            assert(printf("Process %ld exited with status: %d \n", status, exit_status) != 0);
-        }
         pause();
     }
     return(0);    
@@ -56,5 +53,10 @@ int main() {
 void handler(int signal_type) {
     if (signal_type == 17) {
         WRITESTRING("SIGCHLD birthed!\n");
+        assert((waitpid(-1, &status, 0)) != 0);
+        if (WIFSIGNALED(status)){
+            int exit_status = WTERMSIG(status);
+            assert(printf("Process %ld exited with status: %d \n", getpid(), exit_status) != 0);
+        }
     }
 }
