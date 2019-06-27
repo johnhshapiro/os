@@ -24,7 +24,7 @@ int main() {
         assert((waitpid(-1, &status, 0)) != 0);
         if (WIFEXITED(status)){
             int exit_status = WEXITSTATUS(status);
-            printf("Process %ld exited with status: %d \n", pid, exit_status);
+            assert(printf("Process %ld exited with status: %d \n", pid, exit_status) != 0);
         }
     } 
 
