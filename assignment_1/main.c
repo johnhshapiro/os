@@ -20,7 +20,7 @@ int main() {
         exit(-1);
     }
     else {
-        int pid = status;
+        long int pid = status;
         assert((waitpid(-1, &status, 0)) != 0);
         if (WIFEXITED(status)){
             int exit_status = WEXITSTATUS(status);
