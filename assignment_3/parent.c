@@ -36,14 +36,14 @@ int main() {
         exit(-1);
     }
     else {
-        for(int i = 0; i < 5; i++) {
-            WRITESTRING("STOP, CHILD!\n");
-            assert(kill(status, SIGSTOP) == 0);
-            sleep(2);
-            WRITESTRING("CONTINUE, CHILD!\n");
-            assert(kill(status, SIGCONT) == 0);
-            sleep(2);
-        }
+        // for(int i = 0; i < 5; i++) {
+        //     WRITESTRING("STOP, CHILD!\n");
+        //     assert(kill(status, SIGSTOP) == 0);
+        //     sleep(2);
+        //     WRITESTRING("CONTINUE, CHILD!\n");
+        //     assert(kill(status, SIGCONT) == 0);
+        //     sleep(2);
+        // }
         assert(kill(status, SIGINT) == 0);
         pause();
     }
@@ -53,11 +53,12 @@ int main() {
 void handler(int signal_type) {
     if (signal_type == 17) {
         int signal_status = status;
-        WRITESTRING("SIGCHLD birthed!\n");
         assert((waitpid(-1, &signal_status, 0)) != 0);
         if (WIFSIGNALED(signal_status)){
             int exit_status = WTERMSIG(signal_status);
-            assert(printf("Process %ld exited with status: %d \n", status, exit_status) != 0);
+            WRITESTRING("Cld exited with status: ");
+            WRITEINT(exit_status, 2);
+            WRITESTRING("\n");
         }
     }
     exit(0);
