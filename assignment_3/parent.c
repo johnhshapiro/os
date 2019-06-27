@@ -35,15 +35,19 @@ int main() {
         exit(-1);
     }
     else {
-        for(int i = 0; i < 1; i++) {
+        for(int i = 0; i < 5; i++) {
             WRITESTRING("STOP, CHILD!\n");
             assert(kill(status, SIGSTOP) == 0);
             sleep(2);
             WRITESTRING("CONTINUE, CHILD!\n");
-            assert(kill(status, SIGCONT) == 0);  
+            assert(kill(status, SIGCONT) == 0);
             sleep(2);
         }
         assert(kill(status, SIGINT) == 0);
+        if (WIFSIGNALED(status)){
+            int exit_status = WTERMSIG(status);
+            assert(printf("Process %ld exited with status: %d \n", status, exit_status) != 0);
+        }
         pause();
     }
     return(0);    
