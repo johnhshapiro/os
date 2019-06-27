@@ -10,5 +10,5 @@ int main(int argc, char*argv[]) {
         assert(printf("Process: %d %d\n", getpid(), i) != 0);
     }
     assert(printf("Process %d exited with status: %ld \n", getpid(), number) != 0);
-    return number;
+    return(number);
 }
