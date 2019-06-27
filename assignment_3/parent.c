@@ -24,7 +24,7 @@ int main() {
 
     assert(sigaction(SIGCHLD, &action, NULL) == 0);
     
-    int status = fork();
+    status = fork();
 
     if (status == 0) {
         execl("./child", "steve_da_best", NULL);
@@ -52,11 +52,13 @@ int main() {
 
 void handler(int signal_type) {
     if (signal_type == 17) {
+        int signal_status = status;
         WRITESTRING("SIGCHLD birthed!\n");
-        assert((waitpid(-1, &status, 0)) != 0);
-        if (WIFSIGNALED(status)){
-            int exit_status = WTERMSIG(status);
-            assert(printf("Process %ld exited with status: %d \n", getpid(), exit_status) != 0);
+        assert((waitpid(-1, &signal_status, 0)) != 0);
+        if (WIFSIGNALED(signal_status)){
+            int exit_status = WTERMSIG(signal_status);
+            assert(printf("Process %ld exited with status: %d \n", status, exit_status) != 0);
         }
     }
+    exit(0);
 }
