@@ -36,16 +36,16 @@ int main() {
         exit(-1);
     }
     else {
-        // for(int i = 0; i < 5; i++) {
-        //     WRITESTRING("STOP, CHILD!\n");
-        //     assert(kill(status, SIGSTOP) == 0);
-        //     sleep(2);
-        //     WRITESTRING("CONTINUE, CHILD!\n");
-        //     assert(kill(status, SIGCONT) == 0);
-        //     sleep(2);
-        // }
+        for(int i = 0; i < 5; i++) {
+            WRITESTRING("STOP, CHILD!\n");
+            assert(kill(status, SIGSTOP) == 0);
+            assert(sleep(2) >= 0);
+            WRITESTRING("CONTINUE, CHILD!\n");
+            assert(kill(status, SIGCONT) == 0);
+            assert(sleep(2) >= 0);
+        }
         assert(kill(status, SIGINT) == 0);
-        pause();
+        assert(pause() == 0);
     }
     return(0);    
 }
@@ -57,7 +57,7 @@ void handler(int signal_type) {
         if (WIFSIGNALED(signal_status)){
             int exit_status = WTERMSIG(signal_status);
             WRITESTRING("Cld exited with status: ");
-            WRITEINT(exit_status, 2);
+            WRITEINT(exit_status, sizeof(exit_status));
             WRITESTRING("\n");
         }
     }
