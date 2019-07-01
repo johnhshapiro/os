@@ -36,14 +36,14 @@ int main() {
         exit(-1);
     }
     else {
-        // for(int i = 0; i < 5; i++) {
-        //     WRITESTRING("STOP, CHILD!\n");
-        //     assert(kill(status, SIGSTOP) == 0);
-        //     assert(sleep(2) >= 0);
-        //     WRITESTRING("CONTINUE, CHILD!\n");
-        //     assert(kill(status, SIGCONT) == 0);
-        //     assert(sleep(2) >= 0);
-        // }
+        for(int i = 0; i < 5; i++) {
+            WRITESTRING("STOP, CHILD!\n");
+            assert(kill(status, SIGSTOP) == 0);
+            assert(sleep(2) >= 0);
+            WRITESTRING("CONTINUE, CHILD!\n");
+            assert(kill(status, SIGCONT) == 0);
+            assert(sleep(2) >= 0);
+        }
         assert(kill(status, SIGINT) == 0);
         assert(pause() == 0);
     }
