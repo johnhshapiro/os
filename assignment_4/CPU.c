@@ -6,7 +6,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <assert.h>
-#include <systemcall.h>
+#include "systemcall.h"
+#include "eye2eh.c"
 
 /*
 This program does the following.
@@ -63,7 +64,7 @@ Add the following functionality.
    c) Restart the idle process to use the rest of the time slice.
 */
 
-#define NUM_SECONDS 5
+#define NUM_SECONDS 20
 #define ever ;;
 
 enum STATE { NEW, RUNNING, WAITING, READY, TERMINATED, EMPTY };
