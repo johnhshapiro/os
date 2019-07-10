@@ -147,11 +147,28 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
-    /* a) Update the PCB for the process that was interrupted including the
+    /*a) Update the PCB for the process that was interrupted including the
       number of context switches and interrupts it had and changing its
-      state from RUNNING to READY.*/
+      state from RUNNING to READY.
+   b) If there are any NEW processes on processes list, change its state to
+      RUNNING, and fork() and execl() it.
+   c) If there are no NEW processes, round robin the processes in the
+      processes queue that are READY. If no process is READY in the
+      list, execute the idle process.*/
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
+
+    // this is where the magic happens
+    for (int i = 0; i < PROCESSTABLESIZE; i++)
+    {
+        if (processes[i].state == NEW)
+        {
+            //
+            // Your dumb code here
+            //
+        }
+    }
+    // leaving where the magic happens
 
     WRITESTRING ("Continuing idle: ");
     WRITEINT (idle.pid, 6);
@@ -210,10 +227,11 @@ int main(int argc, char **argv) {
     running = &idle;
 
     // My Bad code starts here
-    for (int i = 0; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
-        processes[i].name = argv[i + 1];
-        processes[i].state = NEW;
+        processes[i - 1].name = argv[i];
+        processes[i - 1].state = NEW;
+        printf("%s\n", processes[i - 1].name);
     }
     // My bad code ends here
 
