@@ -65,7 +65,7 @@ Add the following functionality.
    c) Restart the idle process to use the rest of the time slice.
 */
 
-#define NUM_SECONDS 20
+#define NUM_SECONDS 5
 #define ever ;;
 
 enum STATE { NEW, RUNNING, WAITING, READY, TERMINATED, EMPTY };
@@ -147,6 +147,9 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
+    /* a) Update the PCB for the process that was interrupted including the
+      number of context switches and interrupts it had and changing its
+      state from RUNNING to READY.*/
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
 
@@ -205,6 +208,14 @@ int main(int argc, char **argv) {
     boot();
     create_idle();
     running = &idle;
+
+    // My Bad code starts here
+    for (int i = 0; i < argc; i++)
+    {
+        processes[i].name = argv[i + 1];
+        processes[i].state = NEW;
+    }
+    // My bad code ends here
 
     for(ever) {
         pause();

@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <string.h>
 #include "syscall.h"
-#include "eye2eh.c"
 
 void handler();
 int status;
