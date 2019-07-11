@@ -92,6 +92,7 @@ int sys_time;
 int timer;
 struct sigaction alarm_handler;
 struct sigaction child_handler;
+int looped_without_readys;
 
 void bad(int signum) {
     WRITESTRING("bad signal: ");
@@ -138,6 +139,7 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 
     if (signum == SIGCHLD) {
         action.sa_flags = SA_NOCLDSTOP | SA_RESTART;
+        running->state = TERMINATED;
     } else {
         action.sa_flags =  SA_RESTART;
     }
@@ -147,11 +149,10 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
-    /*a) Update the PCB for the process that was interrupted including the
+    /* 3
+   a) Update the PCB for the process that was interrupted including the
       number of context switches and interrupts it had and changing its
       state from RUNNING to READY.
-   b) If there are any NEW processes on processes list, change its state to
-      RUNNING, and fork() and execl() it.
    c) If there are no NEW processes, round robin the processes in the
       processes queue that are READY. If no process is READY in the
       list, execute the idle process.*/
@@ -161,13 +162,47 @@ void scheduler (int signum) {
     // this is where the magic happens
     for (int i = 0; i < PROCESSTABLESIZE; i++)
     {
-        if (processes[i].state == NEW)
-        {
-            //
-            // Your dumb code here
-            //
+        if (processes[i].name != NULL) {
+            if (processes[i].state == NEW)
+            {
+                fork();
+                processes[i].pid = getpid();
+                processes[i].ppid = getppid();
+                processes[i].interrupts = 0;
+                processes[i].switches = 0;
+                processes[i].started = sys_time;
+                assert(kill(running->pid, SIGSTOP) == 0);
+                running->state = READY;
+                running->switches++;
+                execl(processes[i].name, "steve_is_cool", NULL);
+                processes[i].state = RUNNING;
+                running = &processes[i];
+                running->switches++;
+            }
         }
     }
+    looped_without_readys = 1;
+    while (looped_without_readys == 1)
+    {
+        for (int i = 0; i < PROCESSTABLESIZE; i++)
+        {
+            if (processes[i].name != NULL) {
+                if (processes[i].state == READY)
+                {
+                    assert(kill(running->pid, SIGSTOP) == 0);
+                    running->state = READY;
+                    running->switches++;
+                    assert(kill(processes[i].pid, SIGCONT) == 0);
+                    processes[i].state = RUNNING;
+                    running = &processes[i];
+                    running->switches++;
+                    
+                }
+            }
+        }
+        
+    }
+    
     // leaving where the magic happens
 
     WRITESTRING ("Continuing idle: ");
@@ -231,7 +266,7 @@ int main(int argc, char **argv) {
     {
         processes[i - 1].name = argv[i];
         processes[i - 1].state = NEW;
-        printf("%s\n", processes[i - 1].name);
+        printf("--->Loading %s for executation\n", processes[i - 1].name);
     }
     // My bad code ends here
 
