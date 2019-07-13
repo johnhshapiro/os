@@ -9,6 +9,7 @@
 #include <assert.h>
 #include "systemcall.h"
 #include "eye2eh.c"
+#include <time.h>
 
 /*
 This program does the following.
@@ -65,7 +66,7 @@ Add the following functionality.
    c) Restart the idle process to use the rest of the time slice.
 */
 
-#define NUM_SECONDS 5
+#define NUM_SECONDS 20
 #define ever ;;
 
 enum STATE { NEW, RUNNING, WAITING, READY, TERMINATED, EMPTY };
@@ -92,7 +93,6 @@ int sys_time;
 int timer;
 struct sigaction alarm_handler;
 struct sigaction child_handler;
-int looped_without_readys;
 
 void bad(int signum) {
     WRITESTRING("bad signal: ");
@@ -139,7 +139,6 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 
     if (signum == SIGCHLD) {
         action.sa_flags = SA_NOCLDSTOP | SA_RESTART;
-        running->state = TERMINATED;
     } else {
         action.sa_flags =  SA_RESTART;
     }
@@ -149,68 +148,65 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
-    /* 3
+/* 3) When a SIGALRM arrives, scheduler() will be called; it currently simply
+   restarts the idle process. Instead, do the following.
    a) Update the PCB for the process that was interrupted including the
       number of context switches and interrupts it had and changing its
       state from RUNNING to READY.
+   b) If there is any NEW process on processes list, change its state to
+      RUNNING, and fork() and execl() it.
    c) If there are no NEW processes, round robin the processes in the
       processes queue that are READY. If no process is READY in the
       list, execute the idle process.*/
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
 
-    // this is where the magic happens
-    for (int i = 0; i < PROCESSTABLESIZE; i++)
-    {
-        if (processes[i].name != NULL) {
-            if (processes[i].state == NEW)
-            {
-                fork();
-                processes[i].pid = getpid();
-                processes[i].ppid = getppid();
-                processes[i].interrupts = 0;
-                processes[i].switches = 0;
-                processes[i].started = sys_time;
-                assert(kill(running->pid, SIGSTOP) == 0);
-                running->state = READY;
-                running->switches++;
-                execl(processes[i].name, "steve_is_cool", NULL);
-                processes[i].state = RUNNING;
-                running = &processes[i];
-                running->switches++;
-            }
-        }
-    }
-    looped_without_readys = 1;
-    while (looped_without_readys == 1)
-    {
-        for (int i = 0; i < PROCESSTABLESIZE; i++)
-        {
-            if (processes[i].name != NULL) {
-                if (processes[i].state == READY)
-                {
-                    assert(kill(running->pid, SIGSTOP) == 0);
-                    running->state = READY;
-                    running->switches++;
-                    assert(kill(processes[i].pid, SIGCONT) == 0);
-                    processes[i].state = RUNNING;
-                    running = &processes[i];
-                    running->switches++;
-                    
-                }
-            }
-        }
-        
-    }
-    
-    // leaving where the magic happens
+    running->state = READY;
+    running->interrupts++;
+    running->switches++;
 
-    WRITESTRING ("Continuing idle: ");
-    WRITEINT (idle.pid, 6);
-    WRITESTRING ("\n");
-    running = &idle;
-    idle.state = RUNNING;
-    systemcall (kill (idle.pid, SIGCONT));
+    int process_number = 0;
+    int found_new = 0;
+    while (found_new == 0)
+    {
+        if (processes[process_number].state == NEW) 
+        {
+            found_new = 1;
+        }
+        else
+        {
+            process_number++;
+        }
+    }
+    running = &processes[process_number];
+    running->state = RUNNING;
+    running->started = clock();
+    running->interrupts = 0;
+    running->switches = 0;
+
+    int fork_status = fork();
+    running->pid = getpid();
+    running->ppid = getppid();
+    if (fork_status == 0)
+    {
+        execl(running->name, "why is this happening to me", NULL);
+        printf("Execl failed with error number %d\n", errno);
+        exit(-1);
+    }
+    else if (fork_status < 0)
+    {
+        perror("fork error");
+        exit(-1);
+    }
+    else {
+    }
+
+    // WRITESTRING ("Continuing idle: ");
+    // WRITEINT (idle.pid, 6);
+    // WRITESTRING ("\n");
+    // running = &idle;
+    // idle.state = RUNNING;
+    // systemcall (kill (idle.pid, SIGCONT));
 
     WRITESTRING("---- leaving scheduler\n");
 }
