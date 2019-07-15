@@ -148,16 +148,6 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 }
 
 void scheduler (int signum) {
-/* 3) When a SIGALRM arrives, scheduler() will be called; it currently simply
-   restarts the idle process. Instead, do the following.
-   a) Update the PCB for the process that was interrupted including the
-      number of context switches and interrupts it had and changing its
-      state from RUNNING to READY.
-   b) If there is any NEW process on processes list, change its state to
-      RUNNING, and fork() and execl() it.
-   c) If there are no NEW processes, round robin the processes in the
-      processes queue that are READY. If no process is READY in the
-      list, execute the idle process.*/
     WRITESTRING("---- entering scheduler\n");
     assert(signum == SIGALRM);
 
