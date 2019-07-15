@@ -89,6 +89,7 @@ struct PCB processes[PROCESSTABLESIZE];
 struct PCB idle;
 struct PCB *running;
 
+int round_robin_process_number;
 int number_of_processes;
 int sys_time;
 int timer;
@@ -195,15 +196,16 @@ void scheduler (int signum) {
     }
     else
     {
-        
-        // for (int i = 0; i < number_of_processes; i++) 
-        // {
-        //     if (processes[i].state == READY)
-        //     {
-        //         running = &processes[i];
-        //         systemcall (kill (running->pid, SIGCONT));
-        //     }
-        // }
+        if (round_robin_process_number == number_of_processes)
+        {
+            round_robin_process_number = 0;
+        }
+        if (processes[round_robin_process_number].state == READY)
+        {
+            running = &processes[round_robin_process_number];
+            systemcall (kill (running->pid, SIGCONT));
+            round_robin_process_number++;
+        }
     }
 
     // WRITESTRING ("Continuing idle: ");
@@ -264,6 +266,7 @@ int main(int argc, char **argv) {
 
     // My Bad code starts here
     number_of_processes = 0;
+    round_robin_process_number = 0;
     for (int i = 1; i < argc; i++)
     {
         number_of_processes++;
