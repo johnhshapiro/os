@@ -89,6 +89,7 @@ struct PCB processes[PROCESSTABLESIZE];
 struct PCB idle;
 struct PCB *running;
 
+int number_of_processes;
 int sys_time;
 int timer;
 struct sigaction alarm_handler;
@@ -149,7 +150,7 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 
 void scheduler (int signum) {
     WRITESTRING("---- entering scheduler\n");
-    assert(signum == SIGALRM);
+    assert(signum == SIGALRM);    
 
     running->state = READY;
     running->interrupts++;
@@ -157,7 +158,7 @@ void scheduler (int signum) {
 
     int process_number = 0;
     int found_new = 0;
-    while (found_new == 0)
+    while (found_new == 0 && process_number < number_of_processes)
     {
         if (processes[process_number].state == NEW) 
         {
@@ -168,27 +169,41 @@ void scheduler (int signum) {
             process_number++;
         }
     }
-    running = &processes[process_number];
-    running->state = RUNNING;
-    running->started = clock();
-    running->interrupts = 0;
-    running->switches = 0;
-
-    int fork_status = fork();
-    running->pid = getpid();
-    running->ppid = getppid();
-    if (fork_status == 0)
-    {
-        execl(running->name, "why is this happening to me", NULL);
-        printf("Execl failed with error number %d\n", errno);
-        exit(-1);
+    if (found_new)
+        {
+        running = &processes[process_number];
+        running->state = RUNNING;
+        running->started = clock();
+        running->interrupts = 0;
+        running->switches = 0;
+        running->ppid = getpid();
+        running->pid = fork();
+        if (running->pid == 0)
+        {
+            execl(running->name, "why is this happening to me", NULL);
+            printf("Running program at index %d was: %s\n",process_number , running->name);
+            printf("Execl failed with error number %d\n", errno);
+            exit(-1);
+        }
+        else if (running->pid < 0)
+        {
+            perror("fork error");
+            exit(-1);
+        }
+        else {
+        }
     }
-    else if (fork_status < 0)
+    else
     {
-        perror("fork error");
-        exit(-1);
-    }
-    else {
+        
+        // for (int i = 0; i < number_of_processes; i++) 
+        // {
+        //     if (processes[i].state == READY)
+        //     {
+        //         running = &processes[i];
+        //         systemcall (kill (running->pid, SIGCONT));
+        //     }
+        // }
     }
 
     // WRITESTRING ("Continuing idle: ");
@@ -248,8 +263,10 @@ int main(int argc, char **argv) {
     running = &idle;
 
     // My Bad code starts here
+    number_of_processes = 0;
     for (int i = 1; i < argc; i++)
     {
+        number_of_processes++;
         processes[i - 1].name = argv[i];
         processes[i - 1].state = NEW;
         printf("--->Loading %s for executation\n", processes[i - 1].name);
