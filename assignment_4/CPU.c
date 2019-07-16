@@ -239,7 +239,7 @@ void process_done (int signum) {
     WRITEINT(time(NULL) - running->started, 10);
     WRITESTRING(" seconds\n");
 
-    systemcall(kill(running->pid, SIGTERM));
+    systemcall(kill(0, SIGTERM));
 
     WRITESTRING ("---- leaving process_done\n");
 }
