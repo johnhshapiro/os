@@ -155,7 +155,6 @@ void scheduler (int signum) {
 
     running->state = READY;
     running->interrupts++;
-    running->switches++;
 
     int process_number = 0;
     int found_new = 0;
@@ -171,28 +170,31 @@ void scheduler (int signum) {
         }
     }
     if (found_new)
+    {
+        processes[process_number].state = RUNNING;
+        processes[process_number].started = time(NULL);
+        processes[process_number].interrupts = 0;
+        processes[process_number].switches = 0;
+        processes[process_number].ppid = getpid();
+        processes[process_number].pid = fork();
+        if (processes[process_number].pid == 0)
         {
-        running = &processes[process_number];
-        running->state = RUNNING;
-        running->started = clock();
-        running->interrupts = 0;
-        running->switches = 0;
-        running->ppid = getpid();
-        running->pid = fork();
-        if (running->pid == 0)
-        {
-            execl(running->name, "why is this happening to me", NULL);
-            printf("Running program at index %d was: %s\n",process_number , running->name);
+            execl(processes[process_number].name, "why is this happening to me", NULL);
             printf("Execl failed with error number %d\n", errno);
             exit(-1);
         }
-        else if (running->pid < 0)
+        else if (processes[process_number].pid < 0)
         {
             perror("fork error");
             exit(-1);
         }
         else {
         }
+        if (running->pid != processes[process_number].pid)
+        {
+            processes[process_number].switches++;
+        }
+        running = &processes[process_number];
     }
     else
     {
@@ -202,6 +204,10 @@ void scheduler (int signum) {
         }
         if (processes[round_robin_process_number].state == READY)
         {
+            if (running->pid != processes[round_robin_process_number].pid)
+            {
+                running->switches++;
+            }
             running = &processes[round_robin_process_number];
             systemcall (kill (running->pid, SIGCONT));
             round_robin_process_number++;
@@ -222,8 +228,18 @@ void process_done (int signum) {
     WRITESTRING("---- entering process_done\n");
     assert (signum == SIGCHLD);
 
-    WRITESTRING ("Timer died, cleaning up and killing everything\n");
-    systemcall(kill(0, SIGTERM));
+    running->state = TERMINATED;
+    WRITESTRING ("\nProcess pid: ");
+    WRITEINT(running->pid, 7);
+    WRITESTRING ("\nInterrupts: ");
+    WRITEINT(running->interrupts, 7);
+    WRITESTRING ("\nContext switches: ");
+    WRITEINT(running->switches, 7);
+    WRITESTRING("\nProcessing Time: ");
+    WRITEINT(time(NULL) - running->started, 10);
+    WRITESTRING(" seconds\n");
+
+    systemcall(kill(running->pid, SIGTERM));
 
     WRITESTRING ("---- leaving process_done\n");
 }
@@ -272,7 +288,6 @@ int main(int argc, char **argv) {
         number_of_processes++;
         processes[i - 1].name = argv[i];
         processes[i - 1].state = NEW;
-        printf("--->Loading %s for executation\n", processes[i - 1].name);
     }
     // My bad code ends here
 
