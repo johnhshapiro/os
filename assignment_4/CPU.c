@@ -192,7 +192,9 @@ void scheduler (int signum) {
         }
         if (running->pid != processes[process_number].pid)
         {
+            WRITESTRING("I HATE PROGRAMMING AND THIS IS THE WRONG MAJOR FOR ME");
             processes[process_number].switches++;
+            WRITESTRING("I HATE PROGRAMMING AND THIS IS THE WRONG MAJOR FOR ME");
         }
         running = &processes[process_number];
     }
@@ -213,13 +215,23 @@ void scheduler (int signum) {
             round_robin_process_number++;
         }
     }
-
-    // WRITESTRING ("Continuing idle: ");
-    // WRITEINT (idle.pid, 6);
-    // WRITESTRING ("\n");
-    // running = &idle;
-    // idle.state = RUNNING;
-    // systemcall (kill (idle.pid, SIGCONT));
+    // int found_ready = 0;
+    // for (int i = 1; i <= number_of_processes; i ++)
+    // {
+    //     if (processes[i].state == READY)
+    //     {
+    //         found_ready = 1;
+    //     }
+    // }
+    // if (!found_ready)
+    // {
+    //     WRITESTRING ("Continuing idle: ");
+    //     WRITEINT (idle.pid, 6);
+    //     WRITESTRING ("\n");
+    //     running = &idle;
+    //     idle.state = RUNNING;
+    //     systemcall (kill (idle.pid, SIGCONT));
+    // }
 
     WRITESTRING("---- leaving scheduler\n");
 }
@@ -239,12 +251,6 @@ void process_done (int signum) {
     WRITEINT(time(NULL) - running->started, 10);
     WRITESTRING(" seconds\n");
 
-    WRITESTRING ("Continuing idle: ");
-    WRITEINT (idle.pid, 6);
-    WRITESTRING ("\n");
-    running = &idle;
-    idle.state = RUNNING;
-    systemcall (kill (idle.pid, SIGCONT));
     systemcall(kill(running->pid, SIGTERM));
 
     WRITESTRING ("---- leaving process_done\n");
