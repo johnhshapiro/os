@@ -239,7 +239,13 @@ void process_done (int signum) {
     WRITEINT(time(NULL) - running->started, 10);
     WRITESTRING(" seconds\n");
 
-    systemcall(kill(0, SIGTERM));
+    WRITESTRING ("Continuing idle: ");
+    WRITEINT (idle.pid, 6);
+    WRITESTRING ("\n");
+    running = &idle;
+    idle.state = RUNNING;
+    systemcall (kill (idle.pid, SIGCONT));
+    systemcall(kill(running->pid, SIGTERM));
 
     WRITESTRING ("---- leaving process_done\n");
 }
