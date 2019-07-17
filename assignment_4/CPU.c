@@ -192,9 +192,7 @@ void scheduler (int signum) {
         }
         if (running->pid != processes[process_number].pid)
         {
-            WRITESTRING("I HATE PROGRAMMING AND THIS IS THE WRONG MAJOR FOR ME");
             processes[process_number].switches++;
-            WRITESTRING("I HATE PROGRAMMING AND THIS IS THE WRONG MAJOR FOR ME");
         }
         running = &processes[process_number];
     }
