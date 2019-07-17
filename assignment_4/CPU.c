@@ -112,8 +112,8 @@ void(*ISV[32])(int) = {
 };
 
 void ISR (int signum) {
-    if (signum != SIGCHLD) {
-        kill (running->pid, SIGSTOP);
+    if (signum != SIGCHLD && running->pid != idle.pid) {
+        assert(kill (running->pid, SIGSTOP) == 0);
         WRITESTRING("Stopping: ");
         WRITEINT(running->pid, 6);
         WRITESTRING("\n");
@@ -124,7 +124,7 @@ void ISR (int signum) {
 
 void send_signals(int signal, int pid, int interval, int number) {
     for(int i = 1; i <= number; i++) {
-        sleep(interval);
+        assert(sleep(interval) == 0);
         WRITESTRING("Sending signal: ");
         WRITEINT(signal, 4);
         WRITESTRING(" to process: ");
@@ -151,7 +151,17 @@ void create_handler(int signum, struct sigaction action, void(*handler)(int)) {
 
 void scheduler (int signum) {
     WRITESTRING("---- entering scheduler\n");
-    assert(signum == SIGALRM);    
+    assert(signum == SIGALRM);
+
+    if (running->state == TERMINATED)
+    {
+        WRITESTRING ("Continuing idle: ");
+        WRITEINT (idle.pid, 6);
+        WRITESTRING ("\n");
+        running = &idle;
+        idle.state = RUNNING;
+        systemcall (kill (idle.pid, SIGCONT));
+    }
 
     running->state = READY;
     running->interrupts++;
@@ -172,11 +182,11 @@ void scheduler (int signum) {
     if (found_new)
     {
         processes[process_number].state = RUNNING;
-        processes[process_number].started = time(NULL);
+        assert((processes[process_number].started = time(NULL)) > 0);
         processes[process_number].interrupts = 0;
         processes[process_number].switches = 0;
         processes[process_number].ppid = getpid();
-        processes[process_number].pid = fork();
+        assert((processes[process_number].pid = fork()) != -1);
         if (processes[process_number].pid == 0)
         {
             execl(processes[process_number].name, "why is this happening to me", NULL);
@@ -209,27 +219,10 @@ void scheduler (int signum) {
                 running->switches++;
             }
             running = &processes[round_robin_process_number];
-            systemcall (kill (running->pid, SIGCONT));
+            systemcall(kill (running->pid, SIGCONT));
             round_robin_process_number++;
         }
     }
-    // int found_ready = 0;
-    // for (int i = 1; i <= number_of_processes; i ++)
-    // {
-    //     if (processes[i].state == READY)
-    //     {
-    //         found_ready = 1;
-    //     }
-    // }
-    // if (!found_ready)
-    // {
-    //     WRITESTRING ("Continuing idle: ");
-    //     WRITEINT (idle.pid, 6);
-    //     WRITESTRING ("\n");
-    //     running = &idle;
-    //     idle.state = RUNNING;
-    //     systemcall (kill (idle.pid, SIGCONT));
-    // }
 
     WRITESTRING("---- leaving scheduler\n");
 }
@@ -238,16 +231,23 @@ void process_done (int signum) {
     WRITESTRING("---- entering process_done\n");
     assert (signum == SIGCHLD);
 
-    running->state = TERMINATED;
-    WRITESTRING ("\nProcess pid: ");
-    WRITEINT(running->pid, 7);
-    WRITESTRING ("\nInterrupts: ");
-    WRITEINT(running->interrupts, 7);
-    WRITESTRING ("\nContext switches: ");
-    WRITEINT(running->switches, 7);
-    WRITESTRING("\nProcessing Time: ");
-    WRITEINT(time(NULL) - running->started, 10);
-    WRITESTRING(" seconds\n");
+    if (running->pid != idle.pid)
+    {
+        running->state = TERMINATED;
+        WRITESTRING ("\nProcess pid: ");
+        WRITEINT(running->pid, 7);
+        WRITESTRING ("\nInterrupts: ");
+        WRITEINT(running->interrupts, 7);
+        WRITESTRING ("\nContext switches: ");
+        WRITEINT(running->switches, 7);
+        WRITESTRING("\nProcessing Time: ");
+        WRITEINT(time(NULL) - running->started, 10);
+        WRITESTRING(" seconds\n");
+    }
+    else
+    {
+        WRITESTRING(">>ENTERED PROCESS DONE WITH IDLE, CONTINUING IDLE\n")
+    }
 
     systemcall(kill(running->pid, SIGTERM));
 
@@ -256,7 +256,7 @@ void process_done (int signum) {
 
 void boot()
 {
-    sys_time = 0;
+    sys_time = time(NULL);
 
     ISV[SIGALRM] = scheduler;
     ISV[SIGCHLD] = process_done;
@@ -290,7 +290,6 @@ int main(int argc, char **argv) {
     create_idle();
     running = &idle;
 
-    // My Bad code starts here
     number_of_processes = 0;
     round_robin_process_number = 0;
     for (int i = 1; i < argc; i++)
@@ -299,7 +298,6 @@ int main(int argc, char **argv) {
         processes[i - 1].name = argv[i];
         processes[i - 1].state = NEW;
     }
-    // My bad code ends here
 
     for(ever) {
         pause();
