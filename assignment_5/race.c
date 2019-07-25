@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <errno.h>
 
-#define NUM_THREADS 20
+#define NUM_THREADS 2
 
 pthread_mutex_t lock;
 
