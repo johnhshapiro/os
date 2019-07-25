@@ -6,18 +6,6 @@
 #include <assert.h>
 #include <errno.h>
 
-
-/*
-** Compile and run this program, and make sure you get the 'aargh' error
-** message. Fix it using a pthread mutex. The one command-line argument is
-** the number of times to loop. Here are some suggested initial values, but
-** you might have to tune them to your machine.
-** Debian 8: 100000000
-** Gouda: 10000000
-** OS X: 100000
-** You will need to compile your program with a "-lpthread" option.
-*/
-
 #define NUM_THREADS 20
 
 pthread_mutex_t lock;
